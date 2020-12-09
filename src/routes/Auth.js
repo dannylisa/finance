@@ -1,5 +1,5 @@
 import React from 'react';
-import {firebaseInstance, authService} from '../fbase';
+import {firebaseInstance, authService} from 'fbase';
 import {Button} from '@material-ui/core';
 import {IoLogoGoogle} from 'react-icons/io5';
 

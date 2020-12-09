@@ -1,0 +1,17 @@
+#search-select{
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#search-select > div{
+    width:100px;
+    margin: 5px;
+}
+#search-tab{
+    padding: 3px 20px 5px 20px;
+}
+
+#exchange-tab .search-exchange{
+    width: 80%;
+}
