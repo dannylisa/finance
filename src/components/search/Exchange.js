@@ -4,7 +4,7 @@ import { IoAddCircleOutline, IoSwapHorizontalOutline } from 'react-icons/io5'
 import { ExchangeRateData } from 'objects/Data';
 
 const Exchange = ({select, stroke, orientation}) => {
-    const from = '2020-09-01';
+    const from = '2015-09-01';
     const today = new Date().format('yyyy-mm-dd');
     const currency = ["USD", "KRW", "CNY", "JPY", "EUR"];
     const [base, setBase]=useState("USD");
@@ -27,6 +27,10 @@ const Exchange = ({select, stroke, orientation}) => {
     }
 
     return(
+        <>
+        <div className="search-tab-title">
+            <b>환율</b>
+        </div>
         <Grid container id="exchange-tab">
             <Grid container item xs={12} md={5} justify="center">
                 <FormControl className="search-exchange">
@@ -70,6 +74,7 @@ const Exchange = ({select, stroke, orientation}) => {
                 </IconButton>
             </Grid>
         </Grid>
+        </>
     )
 }
 

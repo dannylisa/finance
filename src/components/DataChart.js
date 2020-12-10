@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend} from 'recharts';
+import {ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend} from 'recharts';
 import PropTypes from 'prop-types';
 import {Data} from 'objects/Data';
 
@@ -67,19 +67,31 @@ const DataChart = ({datas, xAxis}) => {
             {
                 datas.map( (d, idx) => {
                     let {yAxis, type, stroke} = d;
-                    return (
-                        type==="line" &&
-                        <Line 
-                            yAxisId={yAxis}
-                            type="monotone" 
-                            key={idx}
-                            name={yAxis}
-                            dataKey={yAxis} 
-                            stroke={stroke} 
-                            strokeWidth={2} 
-                            dot={false} />
-
-                    )
+                    switch (type) {
+                        case "line":
+                            return (
+                                <Line 
+                                    yAxisId={yAxis}
+                                    type="monotone" 
+                                    key={idx}
+                                    name={yAxis}
+                                    dataKey={yAxis} 
+                                    stroke={stroke} 
+                                    strokeWidth={2} 
+                                    dot={false} />
+                            )
+                        case "bar":
+                            return (
+                                <Bar
+                                yAxisId={yAxis}
+                                key={idx}
+                                name={yAxis}
+                                dataKey={yAxis}
+                                fill={stroke} />
+                            )
+                        default:
+                            return <></>;
+                    }   
                 })
             }
         </ComposedChart>

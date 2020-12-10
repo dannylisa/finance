@@ -1,3 +1,10 @@
+#selected{
+    padding: 10px 0 10px 0;
+}
+#selected > div{
+    margin-left:8px;
+    box-shadow: 3px 3px 2px #ccc;
+}
 #search-select{
     height: 80px;
     display: flex;
@@ -8,10 +15,13 @@
     width:100px;
     margin: 5px;
 }
+
 #search-tab{
     padding: 3px 20px 5px 20px;
 }
-
+.search-tab-title{
+    margin-bottom: 10px;
+}
 #exchange-tab .search-exchange{
     width: 80%;
 }

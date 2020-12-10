@@ -17,7 +17,8 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
     "recharts": "^1.8.5",
-    "web-vitals": "^0.2.4"
+    "web-vitals": "^0.2.4",
+    "xml2json-ltx": "^0.11.4"
   },
   "scripts": {
     "start": "react-scripts start",

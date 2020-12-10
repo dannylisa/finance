@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Search from 'components/Search';
 import Selected from 'components/Selected';
 import DataChart from 'components/DataChart';
- 
-const shuffle = (array) => array.map(a => ([Math.random(),a]))
+
+const shuffle =(array) => array.map(a => ([Math.random(),a]))
                                 .sort((a,b) => a[0]-b[0])
                                 .map(a => a[1])
 const Home = () => {
@@ -11,6 +11,7 @@ const Home = () => {
     useEffect(() => {
         setStrokes(prev => shuffle(prev));
     }, [])
+    
     const useSelected = () => {
         const [selected, setSelected] = useState([]);
         const [labels, setLabels] = useState([]);
@@ -26,19 +27,41 @@ const Home = () => {
             setSelected(prev => [...prev, newData]);
             setLabels(prev => [...prev, newLabel]);
         }
+        const updateSelected = (idx, newData) => {
+            setSelected(prev => {
+                prev.splice(idx, 1, newData);
+                return [...prev];
+            })
+        }
         const removeSelected = (idx) => {
             setSelected(prev => prev.filter((p, index)=> index!==idx));
-            setLabels(prev => prev.filter((p, index)=> index!=idx));
+            setLabels(prev => prev.filter((p, index)=> index!==idx));
         }
-        return [selected, labels, select, removeSelected];
+        const removeAll = (idx) => {
+            setSelected([]);
+            setLabels([]);
+        }
+        return [selected, labels, select, updateSelected, removeSelected, removeAll];
     }
-    const [selected, labels, select, removeSelected] = useSelected();
+    const [selected, labels, select, updateSelected, removeSelected, removeAll] = useSelected();
+
+    useEffect(()=>{
+        console.log('selected changed');
+        selected.length && console.log(selected[0]);
+    },[selected])
+
     return(
         <>
         <div style={{height:'400px'}}>
             {selected.length>0 && <DataChart datas={selected} xAxis="date"/>}
         </div>
-        <Selected selected={selected} labels={labels} removeSelected={removeSelected}/>
+        <div id="selected">
+            <Selected 
+                selected={selected}
+                updateSelected={updateSelected}
+                removeSelected={removeSelected}
+                removeAll={removeAll}/>
+        </div>
         <Search select={select} stroke={defaultStrokes[labels.length]} orientation={labels.length & 1 ? "right" : "left"}/>
         </>
     )
