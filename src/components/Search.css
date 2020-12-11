@@ -1,9 +1,20 @@
 #selected{
     padding: 10px 0 10px 0;
+    display: grid;
+    grid-template-columns: auto auto 4%;
 }
 #selected > div{
-    margin-left:8px;
-    box-shadow: 3px 3px 2px #ccc;
+    display: flex;
+    align-items: center;
+}
+#selected .selected-right{
+    justify-content: flex-end;
+}
+#selected > button{
+    padding: 0;
+}
+.select-color-box > button{
+    padding: 2px;
 }
 #search-select{
     height: 80px;

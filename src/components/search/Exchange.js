@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Grid, FormControl, InputLabel, Select, MenuItem, IconButton} from '@material-ui/core';
-import { IoAddCircleOutline, IoSwapHorizontalOutline } from 'react-icons/io5'
+import { IoAddCircleOutline, IoSwapHorizontalOutline } from 'react-icons/io5';
+import { exchangeRate } from 'getdata';
 import { ExchangeRateData } from 'objects/Data';
 
 const Exchange = ({select, stroke, orientation}) => {
@@ -16,13 +17,14 @@ const Exchange = ({select, stroke, orientation}) => {
             setSymbol(event.target.value);
     };
     const onAddClicked = async () => {
+        const fetchedData = await exchangeRate(base, symbol, from, today);
         const ExData = new ExchangeRateData({
                             base,
                             symbol,
                             stroke,
                             orientation
                         })
-        await ExData.setData(from, today);
+        ExData.setData(fetchedData);
         select(ExData);
     }
 

@@ -6,6 +6,7 @@ import {IoLogoGoogle} from 'react-icons/io5';
 const Auth = () => {
     const onGooleClick = async () => {
         const provider = new firebaseInstance.auth.GoogleAuthProvider();
+        console.log(provider)
         await authService.signInWithPopup(provider);
     }
 

@@ -48,8 +48,9 @@ const DataChart = ({datas, xAxis}) => {
             <XAxis name={xAxis} dataKey={xAxis}/>
             {
                 datas.map( (d, idx) => {
-                    const {yAxis, orientation} = d;
+                    const {yAxis, orientation, needAxis} = d;
                     return (
+                        needAxis &&
                         <YAxis 
                             key={idx} 
                             name={yAxis}
@@ -58,7 +59,7 @@ const DataChart = ({datas, xAxis}) => {
                             orientation={orientation} 
                             allowDataOverflow={false}
                             label={yAxisLabel(yAxis)}/>
-                            )
+                        )
                 } )
             }
             <CartesianGrid strokeDasharray="5 5"/>
@@ -66,12 +67,12 @@ const DataChart = ({datas, xAxis}) => {
             <Legend/>
             {
                 datas.map( (d, idx) => {
-                    let {yAxis, type, stroke} = d;
+                    let {yAxis, type, stroke, needAxis} = d;
                     switch (type) {
                         case "line":
                             return (
                                 <Line 
-                                    yAxisId={yAxis}
+                                    yAxisId={needAxis ? yAxis : d.dependAxis}
                                     type="monotone" 
                                     key={idx}
                                     name={yAxis}

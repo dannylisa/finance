@@ -2,43 +2,50 @@ import React, { useEffect, useState } from 'react';
 import {Grid, FormControl, TextField, Select, MenuItem, IconButton, Chip, Avatar} from '@material-ui/core';
 import { IoAddCircleOutline, IoSearchOutline } from 'react-icons/io5';
 import {corpNameAndCode} from 'getdata';
-import { krxFinancialStatement } from 'getdata';
+import { krxOptions, krxFinancialStatement } from 'getdata';
 import { KrxFSData } from 'objects/Data';
 
 const Krx = ({select, stroke, orientation}) => {
+    const initialOptionTree ={
+        '종목정보':{},
+        '재무제표(연결)':{
+            '재무상태표':{
+                '자산':{},
+                '자본':{},
+                '부채':{},
+            },
+            '손익계산서':{}
+        }
+    }
     const [cache, setCache] = useState({});
     // if Is in? return data : not in ? return false
     const getCache = (...opts) => {
+        if(cache[opts[0]] === undefined)
+            putCache(initialOptionTree, opts[0])
         let curr = cache;
         try{
             opts.forEach( opt => {
                 curr = curr[opt]
             })
+            if(Object.keys(curr).length==0)
+                return false;
         }catch(e){
             return false;
         }
-        return Boolean(curr) ? curr : false;
-    }
-    const putCache = (data, ...opts) => {
-        setCache( prev => {
-            let copy = Object.assign({},prev);
-            let curr = copy;
-            opts.forEach( opt => {
-                if(curr[opt])
-                    curr = curr[opt];
-                else{
-                    curr[opt]={}
-                    curr = curr[opt];
-                }
-            })
-            Object.assign(curr, data);
-            return copy;
-        });
+        return curr;
     }
 
-    const validAverage = (json) => {
-        const arr = Object.values(json).filter(a => a!==0).map(a=>Math.abs(a));
-        return arr.length ? arr.reduce((sum, a)=>sum+a, 0)/arr.length : 0;
+    const putCache = (data, ...opts) => {
+        setCache( prev => {
+            let curr = prev;
+            opts.forEach( opt => {
+                if(curr[opt]===undefined)
+                    curr[opt]={}
+                curr = curr[opt];
+            })
+            Object.assign(curr, data);
+            return {...prev};
+        });
     }
 
 //////////////////////////////////////////////////////////
@@ -70,52 +77,20 @@ const Krx = ({select, stroke, orientation}) => {
             })
     },[optionDepth])
 
-    const optionTree ={
-        '종목정보':{},
-        '재무제표(연결)':{
-            '재무상태표':{},
-            '손익계산서':{}
+    const getSubOptions = async (...opts) =>{
+        const inCache = getCache(corpCode, ...opts);
+        if(inCache)
+            return Object.keys(inCache);
+        else{
+            const options = await krxOptions(corpCode, ...opts);
+            putCache(options.reduce((json, opt)=>{
+                json[opt]={}
+                return json;
+            }, {}),corpCode,...opts);
+            return options;
         }
     }
     
-    const getOptionsByDir = async opts => {
-        let subOptions = {};
-        const inCache = getCache(corpCode, ...opts);
-        if(inCache){
-            return Object.keys(inCache);
-        }
-        else if(opts[0]==="재무제표(연결)"){
-            subOptions = await krxFinancialStatement(corpCode, opts[1]);
-            putCache(subOptions, corpCode, opts[0], opts[1])
-        }
-        return Object.keys(subOptions);
-    }
-    const getSubOptions = async (...opts) => {
-        if(opts.length === 0)
-            return Object.keys(optionTree)
-
-        let curr = optionTree;
-        for(let i=0; i<opts.length-1; i++){
-            curr = curr[opts[i]]
-        }
-        try{
-            const res=Object.keys(curr[ opts[opts.length-1] ])
-            if(res.length)
-                return res;
-            else throw Error('');
-        }catch(e){
-            return await getOptionsByDir(opts);
-        }
-    }
-    //옵션을 크기 순서대로 나열
-    //손익계산서의 경우의 영업이익 > 연간과 같이 2개의 depth를 들어가서 정렬을 해야 하므로
-    //finalOption인자 또한 추가했다.
-    const orderOptionsByAverage = (finalOpts, ...opts) => {
-        return finalOpts
-            .map( opt => [opt, validAverage(getCache(corpCode, ...opts, opt))])
-            .sort(([optA, valA], [optB, valB]) => valB - valA)
-            .map(([opt, val]) => opt);
-    }
     useEffect(() => {
         if(corpCode==='')
             return
@@ -136,7 +111,7 @@ const Krx = ({select, stroke, orientation}) => {
                 setOptionDepth(4)
             }
             const resOptions = await getSubOptions(opt1);
-            setOptionList2( optionDepth===2 ? resOptions : orderOptionsByAverage(resOptions, opt1));
+            setOptionList2(resOptions);
         })();
     }, [opt1])
     useEffect(()=> {
@@ -145,17 +120,7 @@ const Krx = ({select, stroke, orientation}) => {
                 return;
 
             const resOptions = await getSubOptions(opt1, opt2);
-            if(opt2==='손익계산서'){
-                setOptionList3(
-                    resOptions
-                        .map( opt => [opt, validAverage(getCache(corpCode, opt1, opt2, opt, '연간'))])
-                        .sort(([optA, valA], [optB, valB]) => valB - valA)
-                        .map(([opt, val]) => opt) 
-                );
-            }
-            else{
-                setOptionList3( optionDepth===3 ? resOptions : orderOptionsByAverage(resOptions, opt1, opt2));  
-            }
+            setOptionList3(resOptions);  
         })();
     }, [opt2])
     useEffect(()=>{
@@ -163,7 +128,7 @@ const Krx = ({select, stroke, orientation}) => {
             if(opt3==='' || optionDepth<4)
                 return;
             const resOptions = await getSubOptions(opt1, opt2, opt3);
-            setOptionList4( orderOptionsByAverage(resOptions, opt1, opt2, opt3));  
+            setOptionList4(resOptions);  
         })();
     }, [opt3])
 
@@ -198,7 +163,7 @@ const Krx = ({select, stroke, orientation}) => {
         const menuNum = parseInt(name[name.length-1]);
         [setOpt1, setOpt2, setOpt3, setOpt4][menuNum-1](event.target.value);
     };
-    const onAddButtonClicked = () => {
+    const onAddButtonClicked = async () => {
         let item ='';
         if(opt2 === '재무상태표')
             item = opt4;
@@ -213,7 +178,25 @@ const Krx = ({select, stroke, orientation}) => {
             orientation
         })
         const necessaryOpts = [opt1, opt2, opt3, opt4].filter((o, idx)=>idx<optionDepth)
-        KrxData.setData(getCache(corpCode, ...necessaryOpts))
+        const inCache = getCache(corpCode, ...necessaryOpts);
+        if(inCache){
+            KrxData.setCacheData(inCache);
+        }
+        else {
+            let data={};
+            if(opt1==='재무제표(연결)'){
+                if (opt2=='재무상태표') {
+                    data = await krxFinancialStatement(corpCode, '재무상태표', opt3, opt4);
+                    putCache(data, corpCode, opt1, opt2, opt3, opt4);
+                    KrxData.setCacheData(data);
+                }
+                else if (opt2=='손익계산서') {
+                    data = await krxFinancialStatement(corpCode, '손익계산서', opt3);
+                    putCache(data, corpCode, opt1, opt2, opt3);
+                    KrxData.setCacheData(data[opt4]);
+                }
+            }
+        }
         select(KrxData);
     }
     
