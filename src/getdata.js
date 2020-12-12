@@ -30,13 +30,19 @@ export const krxOptions = async (corp_code, ...opts) =>{
         return dbOptions.data().accounts;
     }
     else if(opts[1]==='손익계산서'){
-        const dbOptions = await dbService
-                                .collection(`krx/corps/${corp_code}/재무제표(연결)/손익계산서`)
-                                .doc('accounts')
-                                .get();
-        return dbOptions.data().accounts;
+        if(opts.length===3)
+            return opts[2] ? ['분기','연간'] : [];
+        else{
+            const dbOptions = await dbService
+                                    .collection(`krx/corps/${corp_code}/재무제표(연결)/손익계산서`)
+                                    .doc('accounts')
+                                    .get();
+            const result = dbOptions.data();
+            return Boolean(result) ? result.accounts : [];
+        }
     }
 }
+
 // 재무상태표 opts : 재무상태표 > 자산 > 자산총계
 // 손익계산서 opts : 손익계산서 > 영업이익
 export const krxFinancialStatement = async (corp_code, ...opts) => {

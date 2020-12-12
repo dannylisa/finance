@@ -1,9 +1,9 @@
 import { Avatar, Chip, Grid, IconButton, ListItemText, Menu, MenuItem } from '@material-ui/core';
 import {IoArrowBackSharp, IoArrowForwardSharp, IoCloseCircleOutline, IoHandLeft, IoSquare} from 'react-icons/io5'
 import React, {useState} from 'react';
-import { DailyData } from 'objects/Data';
+import { BarData, LineData } from 'objects/Data';
 
-const Selected = ({selected, select, defaultStrokes, updateSelected, removeSelected, removeAll}) => {
+const Selected = ({selected, defaultStrokes, select, updateSelected, removeSelected, removeAll}) => {
     const ViewSelected = ({data, idx}) => {
         const label = data.label;
         const labelId = label.replace(' ','').replace('/','');
@@ -17,24 +17,28 @@ const Selected = ({selected, select, defaultStrokes, updateSelected, removeSelec
         };
         const setDataFunctions = (data) => {
             let res = [];
-            if(!data.isOrigin)
-                return res;
-            if(data instanceof DailyData){
+            if(!data.isOriginData){
+                res = [...res,{
+                        func: () => updateSelected(idx, data.getOriginData()),
+                        name:"기존 데이터"
+                    }]
+            }
+            else if(data instanceof LineData){
                 res = [...res, 
                     {
-                        func: () => select(data.getSmoothCurve()),
+                        func: () => updateSelected(idx, data.getSmoothCurve()),
                         name:"지수이동평균선"
                     },
                     {
-                        func: () => select(data.getMovingAverage(20)),
+                        func: () => updateSelected(idx, data.getMovingAverage(20)),
                         name:"20일 이동평균선"
                     },
                     {
-                        func: () => select(data.getMovingAverage(50)),
+                        func: () => updateSelected(idx, data.getMovingAverage(50)),
                         name:"50일 이동평균선"
                     },
                     {
-                        func: () => select(data.getMovingAverage(120)),
+                        func: () => updateSelected(idx, data.getMovingAverage(120)),
                         name:"120일 이동평균선"
                     },
                 ];

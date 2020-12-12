@@ -1,17 +1,20 @@
-import { exchangeRate } from 'getdata';
 export class Data {
-    constructor({type, yAxis, stroke, orientation}) {
+    constructor({yAxis, stroke, orientation}) {
         this.data = {};
-        this.type = type || "line";
         this.yAxis = yAxis;
         this.stroke = stroke;
         this.orientation = orientation || "left";
         this.label = yAxis;
-        this.isOrigin = true;
+        this.isOriginData = true;
         this.needAxis = true;
+        this.isOriginData = true;
     }
     setData = function(newData){
         this.data = newData;
+        return this;
+    }
+    setType = function(type){
+        this.type = type;
         return this;
     }
     setStroke = function(stroke){
@@ -22,6 +25,10 @@ export class Data {
         this.orientation = this.orientation === "left" ? "right" : "left";
         return this;
     }
+    setOriginData = function(data){
+        this.originData = data;
+        return this;
+    }
     setLabel = function(label){
         this.label=label;
         return this;
@@ -30,55 +37,88 @@ export class Data {
         this.yAxis = yAxis;
         return this;
     }
-    setIsOrigin = function(bool){
-        this.isOrigin = bool;
+    setIsOriginData = function(bool){
+        this.isOriginData = bool;
         return this;
     }
-    setNeedAxis = function(bool, dependAxis=''){
-        this.needAxis = bool;
-        if(!bool)
-            this.dependAxis = dependAxis;
-        return this;
-    }
-    setDepender = function(depender){
-        this.depender = depender;
-        return this;
-    }
-    getCopied = function(newYaxis, newLabel, needAxis){
+    getCopied = function(newYaxis, newLabel){
         const res = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
-        res.setIsOrigin(false).setLabel(newLabel).setYaxis(newYaxis).setDepender(null);
-        //Axis의 Dependency를 설정해둠으로써 해당 데이터가 삭제되었을 시 depend하던 데이터가 Axis 이름을 물려받게 된다.
-        if(!needAxis){ 
-            res.setNeedAxis(false, this.yAxis);
-            if(this.depender)
-                this.depender = [...this.depender, res];
-            else
-                this.depender = [res];
-        }
+        res.setIsOriginData(false).setLabel(newLabel).setYaxis(newYaxis).setOriginData(this);
         return res;
     }
-    // Should Call When Data dies
-    giveDepender = function(){
-        this.isRemoved = true;
-        if(!this.depender)
-            return;
-        for(let i = 0; i<this.depender.length; i++){
-            if(this.depender[i].isRemoved)
-                continue;
-            this.depender[i].setNeedAxis(true);
-            this.depender[i].depender = this.depender.filter((d, idx)=>idx>i);
-            this.depender[i].depender.forEach( data => {
-                data.setNeedAxis(false, this.depender[i].yAxis);
-            })
-            return;
-        }
+    getOriginData = function(){
+        if(this.isOriginData)
+            return this;
+        return this.originData;
+    }
+    //Axis의 Dependency를 설정해둠으로써 해당 데이터가 삭제되었을 시 depend하던 데이터가 Axis 이름을 물려받게 된다.
+    // addDepender = function(depender){
+    //     depender.setDepender(null);
+    //     depender.setNeedAxis(false, this.yAxis);
+    //     if(this.depender)
+    //         this.depender = [...this.depender, depender];
+    //     else
+    //         this.depender = [depender];
+    // }
+    // // Should Call When Data dies
+    // giveDepender = function(){
+    //     this.isRemoved = true;
+    //     if(!this.depender)
+    //         return;
+    //     for(let i = 0; i<this.depender.length; i++){
+    //         if(this.depender[i].isRemoved)
+    //             continue;
+    //         this.depender[i].setNeedAxis(true);
+    //         this.depender[i].depender = this.depender.filter((d, idx)=>idx>i);
+    //         this.depender[i].depender.forEach( data => {
+    //             data.setNeedAxis(false, this.depender[i].yAxis);
+    //         })
+    //         return;
+    //     }
+    // }
+    //sorted by date, or xAxis
+    getSortedData = function(){
+        return Object.entries(this.data).sort( (m, n) => m[0]  > n[0] ? 1 : -1);
     }
 }
-export class DailyData extends Data{
+export class LineData extends Data{
+    constructor(props){
+        super(props);
+        this.type = "line";
+    }
+
+    //Line데이터를 각 월의 월말 데이터로 변환한다.
+    toMonthlyData = function(){
+        if(this.originData instanceof BarData)
+            return this.originData;
+        const copied = this.getCopied(this.yAxis, this.label);
+        const entry = copied.getSortedData();
+
+        const res = {};
+        entry.reduce((sofarDataArr, [date, value], index) =>{
+            sofarDataArr = [...sofarDataArr, value];
+            if( index===entry.length-1 || (new Date(date).getMonth() !== new Date(entry[index+1][0]).getMonth())){
+                const average = sofarDataArr.reduce((sum, d) => sum+d, 0) / sofarDataArr.length;
+                let lastDayOfMonth;
+                if(index === entry.length-1)
+                    lastDayOfMonth = date;
+                else{
+                    const dd = new Date(date);
+                    lastDayOfMonth = new Date(dd.getFullYear(), dd.getMonth()+1, 0).format('yyyy-mm-dd');
+                }
+                res[lastDayOfMonth]=average;
+                return [];
+            }
+            else{
+                return sofarDataArr
+            }
+        }, [])
+        return copied.setData(res);
+    }
     getSmoothCurve = function(factor=0.5){
-        const copied = this.getCopied(`${this.yAxis}(지수)`,`${this.label}(지수이동평균선)`, false)
+        const copied = this.getCopied(`${this.yAxis}(지수)`,`${this.label}(지수이동평균선)`)
         //날짜 순서대로 정렬
-        const entry = Object.entries(copied.data).sort( (m, n) => m[0]  > n[0] ? 1 : -1);
+        const entry = copied.getSortedData();
         const res = {}
         entry.forEach(([date, value], idx)=>{
             if(idx>0){
@@ -92,7 +132,7 @@ export class DailyData extends Data{
     }
     getMovingAverage = function(days){
         const copied = this.getCopied(`${this.yAxis}(${days})`, `${this.label}(${days}일 이동평균선)`, false);
-        const entry = Object.entries(copied.data).sort( (m, n) => m[0]  > n[0] ? 1 : -1);
+        const entry = copied.getSortedData();
         //days 보다 데이터 수가 작으면 return
         if(entry.length<days)
             return;
@@ -106,12 +146,51 @@ export class DailyData extends Data{
                 return sum;
             }
         },0);
-        (async () => {copied.setData(res)})();
-        return copied;
+        return copied.setData(res);
     }
 }
 
-export class ExchangeRateData extends DailyData{
+export class BarData extends Data{
+    constructor(props){
+        super(props);
+        this.type = "bar";
+    }
+    toBarData = function(){
+        this.type = "bar";
+        return this;
+    }
+    toLineData = function(){
+        this.type = "line";
+        return this;
+    }
+    // 연속적인 데이터를 계단식으로 생성
+    // frontOffset만큼 앞에 데이터를 추가한다.
+    toStairData = function(frontOffset, onlyWeekDays){
+        frontOffset = frontOffset || 90;
+        onlyWeekDays = onlyWeekDays || true;
+        if(this.originData)
+            return this;
+        const copied = this.getCopied(this.yAxis, this.label);
+        const entry = copied.getSortedData();
+
+        const res = {};
+        let curr = new Date(entry[0][0]);
+        curr.setDate(curr.getDate()-frontOffset);
+        entry.forEach(([date, value])=>{
+            while(curr<=new Date(date)){
+                if(onlyWeekDays && (curr.getDay() === 0 || curr.getDay() === 6)){
+                    curr.setDate(curr.getDate()+1);
+                    continue;
+                }
+                res[curr.format('yyyy-mm-dd')]=value;
+                curr.setDate(curr.getDate()+1)
+            }
+        })
+        return copied.setType('line').setData(res);
+    }
+}
+
+export class ExchangeRateData extends LineData{
     constructor({base, symbol, stroke, orientation}) {
         super({
             type:"line",
@@ -125,7 +204,7 @@ export class ExchangeRateData extends DailyData{
     }
 }
 
-export class KrxFSData extends Data{
+export class KrxFSData extends BarData{
     constructor({corpName, item, stroke, orientation}) {
         super({
             type:"bar",
@@ -145,8 +224,12 @@ export class KrxFSData extends Data{
                             .replace('_2Q','-06-30')
                             .replace('_3Q','-09-30')
                             .replace('_4Q','-12-31');
+            const yearReg = /^(19|20)\d{2}$/;
+            if(yearReg.test(quarter))
+                quarter += '-12-31';
             res[quarter]=value;
         })
         return this.setData(res);
     }
 }
+

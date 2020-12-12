@@ -74,7 +74,7 @@ const DataChart = ({datas, xAxis}) => {
                                 <Line 
                                     yAxisId={needAxis ? yAxis : d.dependAxis}
                                     type="monotone" 
-                                    key={idx}
+                                    key={idx+100}
                                     name={yAxis}
                                     dataKey={yAxis} 
                                     stroke={stroke} 
@@ -84,7 +84,7 @@ const DataChart = ({datas, xAxis}) => {
                         case "bar":
                             return (
                                 <Bar
-                                yAxisId={yAxis}
+                                yAxisId={needAxis ? yAxis : d.dependAxis}
                                 key={idx}
                                 name={yAxis}
                                 dataKey={yAxis}

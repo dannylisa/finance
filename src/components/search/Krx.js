@@ -9,12 +9,12 @@ const Krx = ({select, stroke, orientation}) => {
     const initialOptionTree ={
         '종목정보':{},
         '재무제표(연결)':{
+            '손익계산서':{},
             '재무상태표':{
                 '자산':{},
                 '자본':{},
                 '부채':{},
-            },
-            '손익계산서':{}
+            }
         }
     }
     const [cache, setCache] = useState({});
@@ -27,7 +27,7 @@ const Krx = ({select, stroke, orientation}) => {
             opts.forEach( opt => {
                 curr = curr[opt]
             })
-            if(Object.keys(curr).length==0)
+            if(Object.keys(curr).length===0)
                 return false;
         }catch(e){
             return false;
@@ -164,6 +164,11 @@ const Krx = ({select, stroke, orientation}) => {
         [setOpt1, setOpt2, setOpt3, setOpt4][menuNum-1](event.target.value);
     };
     const onAddButtonClicked = async () => {
+        const necessaryOpts = [opt1, opt2, opt3, opt4].filter((o, idx)=>idx<optionDepth);
+        if(necessaryOpts.some( opt => opt==='')){
+            alert('데이터가 없거나 아직 로드되지 않았습니다.');
+        }
+
         let item ='';
         if(opt2 === '재무상태표')
             item = opt4;
@@ -177,7 +182,6 @@ const Krx = ({select, stroke, orientation}) => {
             stroke,
             orientation
         })
-        const necessaryOpts = [opt1, opt2, opt3, opt4].filter((o, idx)=>idx<optionDepth)
         const inCache = getCache(corpCode, ...necessaryOpts);
         if(inCache){
             KrxData.setCacheData(inCache);
@@ -185,12 +189,12 @@ const Krx = ({select, stroke, orientation}) => {
         else {
             let data={};
             if(opt1==='재무제표(연결)'){
-                if (opt2=='재무상태표') {
+                if (opt2==='재무상태표') {
                     data = await krxFinancialStatement(corpCode, '재무상태표', opt3, opt4);
                     putCache(data, corpCode, opt1, opt2, opt3, opt4);
                     KrxData.setCacheData(data);
                 }
-                else if (opt2=='손익계산서') {
+                else if (opt2==='손익계산서') {
                     data = await krxFinancialStatement(corpCode, '손익계산서', opt3);
                     putCache(data, corpCode, opt1, opt2, opt3);
                     KrxData.setCacheData(data[opt4]);
@@ -259,7 +263,9 @@ const Krx = ({select, stroke, orientation}) => {
                         name="krx-opt3"
                         onChange={menuChange}>
                         {
-                            optionList3.map( (c, idx) => <MenuItem key={idx} value={c}>{c}</MenuItem> )
+                            optionList3.length ?
+                                optionList3.map( (c, idx) => <MenuItem key={idx} value={c}>{c}</MenuItem> )
+                                : <MenuItem disabled>등록된 정보가 없습니다.</MenuItem>
                         }
                     </Select>
                 </FormControl>
@@ -273,7 +279,9 @@ const Krx = ({select, stroke, orientation}) => {
                         name="krx-opt4"
                         onChange={menuChange}>
                         {
-                            optionList4.map( (c, idx) => <MenuItem key={idx} value={c}>{c}</MenuItem> )
+                            optionList4.length ?
+                                optionList4.map( (c, idx) => <MenuItem key={idx} value={c}>{c}</MenuItem> )
+                                : <MenuItem disabled>등록된 정보가 없습니다.</MenuItem>
                         }
                     </Select>
                 </FormControl>

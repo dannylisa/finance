@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Search from 'components/Search';
 import Selected from 'components/Selected';
 import DataChart from 'components/DataChart';
+import { LineData, BarData } from 'objects/Data';
 
 const Home = () => {
-    const defaultStrokes = ["#8884d8", "#ff9d44", "#44aaff","#73c96c", "#ff7777","#999999"];
-    
+    const defaultStrokes = ["#8884d8", "#ff9d44", "#44aaff","#73c96c", "#d4af37", "#ff7777", "#aaaaaa"];
+    const [countSelected, setCountSelected] = useState(0);
     const useSelected = () => {
         const [selected, setSelected] = useState([]);
         const [labels, setLabels] = useState([]);
@@ -21,8 +22,13 @@ const Home = () => {
             }
             setSelected(prev => [...prev, newData]);
             setLabels(prev => [...prev, newLabel]);
+            setCountSelected(prev=>prev+1);
         }
         const updateSelected = (idx, updatedData) => {
+            if(labels.includes(updatedData.label) && labels[idx]!==updatedData.label){
+                alert('이미 선택되어있는 데이터입니다!')
+                return;
+            }
             setSelected(prev => {
                 prev.splice(idx, 1, updatedData);
                 return [...prev];
@@ -33,14 +39,35 @@ const Home = () => {
             });
         }
         const removeSelected = (idx) => {
-            selected[idx].giveDepender();
             setSelected(prev => prev.filter((p, index)=> index!==idx));
             setLabels(prev => prev.filter((p, index)=> index!==idx));
+            setCountSelected(prev=>prev-1);
         }
         const removeAll = () => {
             setSelected([]);
             setLabels([]);
+            setCountSelected(0);
         }
+        const isDataMixed = () => (
+            !selected.every( s => s instanceof BarData)
+            && !selected.every( s => s instanceof LineData)
+        );
+        useEffect(()=>{
+            if(isDataMixed()){
+                setSelected(prev => {
+                    return prev.map( s => {
+                        return s instanceof BarData ? s.toStairData() : s
+                    })
+                })
+            }
+            else{
+                setSelected(prev => {
+                    return prev.map( s => {
+                        return s instanceof BarData ? s.getOriginData() : s
+                    })
+                })
+            }
+        }, [countSelected])
         return [selected, labels, select, updateSelected, removeSelected, removeAll];
     }
     const [selected, labels, select, updateSelected, removeSelected, removeAll] = useSelected();
@@ -60,7 +87,12 @@ const Home = () => {
         <Search 
             select={select} 
             stroke={defaultStrokes[labels.length]} 
-            orientation={selected.filter(s=>s.needAxis).length & 1 ? "right" : "left"}/>
+            orientation={
+                selected.length ?
+                    (selected[selected.length-1].orientation==='left' ? "right" : "left")
+                :
+                    'left'
+            }/>
         </>
     )
 }

@@ -32,5 +32,4 @@ Date.prototype.addDate = function(dates){
   this.setDate(this.getDate()+dates);
   return this;
 }
-
 export default App;
