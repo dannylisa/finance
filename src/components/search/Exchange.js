@@ -1,10 +1,10 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Grid, FormControl, InputLabel, Select, MenuItem, IconButton} from '@material-ui/core';
 import { IoAddCircleOutline, IoSwapHorizontalOutline } from 'react-icons/io5';
 import { exchangeRate } from 'getdata';
 import { ExchangeRateData } from 'objects/Data';
 
-const Exchange = ({select, stroke, orientation}) => {
+const Exchange = ({select, strokeGenerator, orientation}) => {
     const from = '2015-09-01';
     const today = new Date().format('yyyy-mm-dd');
     const currency = ["USD", "KRW", "CNY", "JPY", "EUR"];
@@ -21,7 +21,7 @@ const Exchange = ({select, stroke, orientation}) => {
         const ExData = new ExchangeRateData({
                             base,
                             symbol,
-                            stroke,
+                            stroke: strokeGenerator(),
                             orientation
                         })
         ExData.setData(fetchedData);
@@ -41,8 +41,7 @@ const Exchange = ({select, stroke, orientation}) => {
                         labelId="exchange-base-label"
                         name="exchange-base"
                         value={base}
-                        onChange={menuChange}
-                        >
+                        onChange={menuChange}>
                         {
                             currency.map( (c, idx) => (
                                 <MenuItem key={idx} value={c}>{c}</MenuItem>

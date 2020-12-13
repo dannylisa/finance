@@ -6,7 +6,26 @@ import {Data} from 'objects/Data';
 // ["KRW", {2020-12-01:1000, 2020-12-02:1020, 2020-12-03:1030}] 와
 // ["CNY", {2020-12-01:6.9, 2020-12-02:7, 2020-12-03:7.1}]을
 // [{date:2020-12-01, KRW:1000, CNY:6.9}, {date:2020-12-02, KRW:1020, CNY:7}, {date:2020-12-03, KRW:1030, CNY:7.1}] 로 합성
-export const merge = (xAxis, ...name_data_entries) => {
+const setUnit = (data) => {
+    const values = Object.values(data.data);
+    const average = values.length ? values.reduce((sum, value) => sum+value, 0)/values.length : 0;
+    let unit = average > 50000 ? Math.floor( (average.toString().length - 5 ) / 3)*3 : 0;
+    unit = unit >= 15 ? 15 : unit;
+    const setDataUnit = (name, unit) => {
+        data.setUnit(`(단위: ${name})`);
+        for(let key in data.data){
+            data.data[key]=parseFloat((data.data[key]/unit).toFixed(2));
+        }
+    }
+    switch(unit){
+        case 3: setDataUnit('천',1000); break;
+        case 6: setDataUnit('백만',1000000); break;
+        case 9: setDataUnit('십억',1000000000); break;
+        case 12: setDataUnit('조',1000000000000); break;
+        case 15: setDataUnit('천조',1000000000000000); break;
+    }
+}
+const merge = (xAxis, ...name_data_entries) => {
     let res = [];
     let copy_data = name_data_entries.map(([name, data]) => [name, Object.assign({}, data)]);
     copy_data.forEach(([name, data]) => {
@@ -33,6 +52,7 @@ export const merge = (xAxis, ...name_data_entries) => {
 const DataChart = ({datas, xAxis}) => {
     const [mergedData, setMergedData] = useState([]);
     useEffect(()=> {
+        datas.forEach(data => setUnit(data));
         setMergedData( merge(xAxis, ...datas.map( d => [d.yAxis, d.data])) );
     },[datas])
     const yAxisLabel = (name) => ({
@@ -67,7 +87,7 @@ const DataChart = ({datas, xAxis}) => {
             <Legend/>
             {
                 datas.map( (d, idx) => {
-                    let {yAxis, type, stroke, needAxis} = d;
+                    let {yAxis, type, stroke, needAxis, unit} = d;
                     switch (type) {
                         case "line":
                             return (
@@ -79,6 +99,7 @@ const DataChart = ({datas, xAxis}) => {
                                     dataKey={yAxis} 
                                     stroke={stroke} 
                                     strokeWidth={2} 
+                                    unit={unit}
                                     dot={false} />
                             )
                         case "bar":
@@ -88,6 +109,7 @@ const DataChart = ({datas, xAxis}) => {
                                 key={idx}
                                 name={yAxis}
                                 dataKey={yAxis}
+                                unit={unit}
                                 fill={stroke} />
                             )
                         default:

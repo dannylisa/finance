@@ -8,6 +8,7 @@ export class Data {
         this.isOriginData = true;
         this.needAxis = true;
         this.isOriginData = true;
+        this.unit='';
     }
     setData = function(newData){
         this.data = newData;
@@ -23,6 +24,10 @@ export class Data {
     }
     toggleOrientation = function(){
         this.orientation = this.orientation === "left" ? "right" : "left";
+        return this;
+    }
+    setUnit = function(unit){
+        this.unit = unit;
         return this;
     }
     setOriginData = function(data){
@@ -204,7 +209,7 @@ export class ExchangeRateData extends LineData{
     }
 }
 
-export class KrxFSData extends BarData{
+export class KrxData extends BarData{
     constructor({corpName, item, stroke, orientation}) {
         super({
             type:"bar",

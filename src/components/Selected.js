@@ -3,7 +3,7 @@ import {IoArrowBackSharp, IoArrowForwardSharp, IoCloseCircleOutline, IoHandLeft,
 import React, {useState} from 'react';
 import { BarData, LineData } from 'objects/Data';
 
-const Selected = ({selected, defaultStrokes, select, updateSelected, removeSelected, removeAll}) => {
+const Selected = ({selected, defaultStrokes, updateSelected, removeSelected, removeAll, isDataMixed}) => {
     const ViewSelected = ({data, idx}) => {
         const label = data.label;
         const labelId = label.replace(' ','').replace('/','');
@@ -22,6 +22,15 @@ const Selected = ({selected, defaultStrokes, select, updateSelected, removeSelec
                         func: () => updateSelected(idx, data.getOriginData()),
                         name:"기존 데이터"
                     }]
+            }
+            else if(!isDataMixed() && data instanceof BarData){
+                res = [...res,(
+                    data.type==='line' ? 
+                            {func: () => updateSelected(idx, data.toBarData()),
+                            name:"Bar Chart"}
+                        : {func: () => updateSelected(idx, data.toLineData()),
+                            name:"Line Chart"}
+                )]
             }
             else if(data instanceof LineData){
                 res = [...res, 

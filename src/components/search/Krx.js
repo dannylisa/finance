@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {Grid, FormControl, TextField, Select, MenuItem, IconButton, Chip, Avatar} from '@material-ui/core';
 import { IoAddCircleOutline, IoSearchOutline } from 'react-icons/io5';
-import {corpNameAndCode} from 'getdata';
-import { krxOptions, krxFinancialStatement } from 'getdata';
-import { KrxFSData } from 'objects/Data';
+import { corpNameAndCode, krxStockInfo, krxOptions, krxFinancialStatement, krxFinancialRatio } from 'getdata';
+import { KrxData } from 'objects/Data';
 
-const Krx = ({select, stroke, orientation}) => {
+const Krx = ({select, strokeGenerator, orientation}) => {
     const initialOptionTree ={
         '종목정보':{},
         '재무제표(연결)':{
             '손익계산서':{},
-            '재무상태표':{
-                '자산':{},
-                '자본':{},
-                '부채':{},
-            }
-        }
+            '재무상태표':{}
+        },
+        '재무비율':{}
     }
     const [cache, setCache] = useState({});
     // if Is in? return data : not in ? return false
@@ -64,7 +60,7 @@ const Krx = ({select, stroke, orientation}) => {
     const [searchValue, setSearchValue] = useState("");
     const [corpName, setCorpName] = useState("");
     const [corpCode, setCorpCode] = useState("");
-    const [optionDepth, setOptionDepth] = useState(0);
+    const [optionDepth, setOptionDepth] = useState(1);
     const [optionList1, opt1, visible1, setOptionList1, setOpt1, setVisible1] = useOption([]);
     const [optionList2, opt2, visible2, setOptionList2, setOpt2, setVisible2] = useOption([]);
     const [optionList3, opt3, visible3, setOptionList3, setOpt3, setVisible3] = useOption([]);
@@ -95,7 +91,7 @@ const Krx = ({select, stroke, orientation}) => {
         if(corpCode==='')
             return
         setVisible1(true);
-        setOptionList1(["종목정보", "재무제표(연결)"]);
+        setOptionList1(["종목정보", "재무제표(연결)","재무비율"]);
     }, [corpCode])
 
     useEffect(()=>{
@@ -109,6 +105,10 @@ const Krx = ({select, stroke, orientation}) => {
             // 재무제표 height : 4
             else if (opt1==="재무제표(연결)"){
                 setOptionDepth(4)
+            }
+            // 재무비율 height : 2
+            else if (opt1==="재무비율"){
+                setOptionDepth(2)
             }
             const resOptions = await getSubOptions(opt1);
             setOptionList2(resOptions);
@@ -166,42 +166,53 @@ const Krx = ({select, stroke, orientation}) => {
     const onAddButtonClicked = async () => {
         const necessaryOpts = [opt1, opt2, opt3, opt4].filter((o, idx)=>idx<optionDepth);
         if(necessaryOpts.some( opt => opt==='')){
-            alert('데이터가 없거나 아직 로드되지 않았습니다.');
+            alert('선택된 데이터가 없습니다.');
+            return;
         }
 
         let item ='';
-        if(opt2 === '재무상태표')
-            item = opt4;
-        else if(opt2 === '손익계산서')
+        if(opt2 === '손익계산서'){
             item = `${opt3}(${opt4})`;
+        }
+        //재무상태표, 재무비율
         else
             item = [opt1, opt2, opt3, opt4][optionDepth-1];
-        const KrxData = new KrxFSData({
+        const krxData = new KrxData({
             corpName,
             item,
-            stroke,
+            stroke: strokeGenerator(),
             orientation
         })
         const inCache = getCache(corpCode, ...necessaryOpts);
         if(inCache){
-            KrxData.setCacheData(inCache);
+            krxData.setCacheData(inCache);
         }
         else {
             let data={};
-            if(opt1==='재무제표(연결)'){
+            if(opt1==='종목정보'){
+                data = await krxStockInfo(corpCode, opt2, '2020-10-01');
+                putCache(corpCode, opt1, opt2);
+                krxData.setCacheData(data);
+            }
+            else if(opt1==='재무제표(연결)'){
                 if (opt2==='재무상태표') {
                     data = await krxFinancialStatement(corpCode, '재무상태표', opt3, opt4);
                     putCache(data, corpCode, opt1, opt2, opt3, opt4);
-                    KrxData.setCacheData(data);
+                    krxData.setCacheData(data);
                 }
                 else if (opt2==='손익계산서') {
                     data = await krxFinancialStatement(corpCode, '손익계산서', opt3);
                     putCache(data, corpCode, opt1, opt2, opt3);
-                    KrxData.setCacheData(data[opt4]);
+                    krxData.setCacheData(data[opt4]);
                 }
             }
+            else if(opt1==='재무비율'){
+                data = await krxFinancialRatio(corpCode, opt2);
+                putCache(data, corpCode, opt1, opt2);
+                krxData.setCacheData(data);
+            }
         }
-        select(KrxData);
+        select(krxData);
     }
     
     return (

@@ -6,6 +6,21 @@ import { LineData, BarData } from 'objects/Data';
 
 const Home = () => {
     const defaultStrokes = ["#8884d8", "#ff9d44", "#44aaff","#73c96c", "#d4af37", "#ff7777", "#aaaaaa"];
+    const [strokeGenerator, setStrokeGenerator] = useState(()=> ()=>{});
+    useEffect(()=>{
+        function* strokeGenerator(){
+            let i=0;
+            while(true){
+                i%=defaultStrokes.length;
+                yield defaultStrokes[i];
+                i++;
+            }
+        }
+        const generator = strokeGenerator();
+        setStrokeGenerator(prev => (() => generator.next().value));
+    },[])
+    
+    
     const [countSelected, setCountSelected] = useState(0);
     const useSelected = () => {
         const [selected, setSelected] = useState([]);
@@ -61,16 +76,25 @@ const Home = () => {
                 })
             }
             else{
-                setSelected(prev => {
-                    return prev.map( s => {
-                        return s instanceof BarData ? s.getOriginData() : s
+                if(countSelected>1){
+                    setSelected(prev => {
+                        return prev.map( s => {
+                            return s instanceof BarData ? s.toLineData() : s
+                        })
                     })
-                })
+                }
+                else{
+                    setSelected(prev => {
+                        return prev.map( s => {
+                            return s instanceof BarData ? s.getOriginData().toBarData() : s
+                        })
+                    })
+                }
             }
         }, [countSelected])
-        return [selected, labels, select, updateSelected, removeSelected, removeAll];
+        return [selected, select, updateSelected, removeSelected, removeAll, isDataMixed];
     }
-    const [selected, labels, select, updateSelected, removeSelected, removeAll] = useSelected();
+    const [selected, select, updateSelected, removeSelected, removeAll, isDataMixed] = useSelected();
 
     return(
         <>
@@ -79,14 +103,14 @@ const Home = () => {
         </div>
         <Selected 
             selected={selected}
-            select={select}
             defaultStrokes={defaultStrokes}
             updateSelected={updateSelected}
             removeSelected={removeSelected}
-            removeAll={removeAll}/>
+            removeAll={removeAll}
+            isDataMixed={isDataMixed}/>
         <Search 
             select={select} 
-            stroke={defaultStrokes[labels.length]} 
+            strokeGenerator={strokeGenerator} 
             orientation={
                 selected.length ?
                     (selected[selected.length-1].orientation==='left' ? "right" : "left")

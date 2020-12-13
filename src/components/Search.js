@@ -4,16 +4,16 @@ import Exchange from 'components/search/Exchange';
 import Krx from 'components/search/Krx';
 import 'components/Search.css'
 
-const Search = ({select, stroke, orientation}) => {
+const Search = ({select, strokeGenerator, orientation}) => {
     const [tab, setTab] = useState("환율");
     const list = ["환율", "국내 기업"];
     const renderSearchComponent = () => {
         switch (tab) {
             case "환율":
-                return <Exchange select={select} orientation={orientation} stroke={stroke}/>
+                return <Exchange select={select} orientation={orientation} strokeGenerator={strokeGenerator}/>
                 break;
             case "국내 기업":
-                return <Krx select={select} orientation={orientation} stroke={stroke}/>
+                return <Krx select={select} orientation={orientation} strokeGenerator={strokeGenerator}/>
                 break;
             default:
                 return <></>;
