@@ -1,20 +1,20 @@
 {
   "files": {
     "main.css": "/finance/static/css/main.5c8385ad.chunk.css",
-    "main.js": "/finance/static/js/main.ebcdacd2.chunk.js",
-    "main.js.map": "/finance/static/js/main.ebcdacd2.chunk.js.map",
+    "main.js": "/finance/static/js/main.0966ca12.chunk.js",
+    "main.js.map": "/finance/static/js/main.0966ca12.chunk.js.map",
     "runtime-main.js": "/finance/static/js/runtime-main.5d8fbf20.js",
     "runtime-main.js.map": "/finance/static/js/runtime-main.5d8fbf20.js.map",
-    "static/js/2.0f514bb1.chunk.js": "/finance/static/js/2.0f514bb1.chunk.js",
-    "static/js/2.0f514bb1.chunk.js.map": "/finance/static/js/2.0f514bb1.chunk.js.map",
+    "static/js/2.4c7c37ed.chunk.js": "/finance/static/js/2.4c7c37ed.chunk.js",
+    "static/js/2.4c7c37ed.chunk.js.map": "/finance/static/js/2.4c7c37ed.chunk.js.map",
     "index.html": "/finance/index.html",
     "static/css/main.5c8385ad.chunk.css.map": "/finance/static/css/main.5c8385ad.chunk.css.map",
-    "static/js/2.0f514bb1.chunk.js.LICENSE.txt": "/finance/static/js/2.0f514bb1.chunk.js.LICENSE.txt"
+    "static/js/2.4c7c37ed.chunk.js.LICENSE.txt": "/finance/static/js/2.4c7c37ed.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.5d8fbf20.js",
-    "static/js/2.0f514bb1.chunk.js",
+    "static/js/2.4c7c37ed.chunk.js",
     "static/css/main.5c8385ad.chunk.css",
-    "static/js/main.ebcdacd2.chunk.js"
+    "static/js/main.0966ca12.chunk.js"
   ]
 }
