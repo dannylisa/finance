@@ -37,9 +37,23 @@
 }
 .chart-control-btns{
     display: grid;
-    grid-template-columns: 10% 80% 10%;
+    grid-template-columns: 12% 76% 12%;
 }
-
+.chart-control-btns .integrate{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.select-period-btns > div{
+    padding: 2px;
+}
 .select-period-btns > div > div{
     width: 100%;
+    background:#ffcec9;
+    color:#f83c23;
+    box-shadow: 1px 1px 2px 1px rgb(153, 63, 63);
+}
+.select-period-btns > div > div:hover,
+.select-period-btns > div > div:focus{
+    background:rgb(255, 174, 174)
 }

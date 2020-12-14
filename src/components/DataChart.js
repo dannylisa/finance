@@ -74,24 +74,18 @@ const recommendIntegratedAxisName = (datas) => {
 }
 
 const DataChart = ({datas, xAxis}) => {
-    const defaultIntegrated = {
-        left:{
-            state: false,
-            name:''
-        },
-        right:{
-            state: false,
-            name:''
-        },
-    }
-    const [integrated, setIntegrated] = useState(defaultIntegrated);
+    const defaultIntegrated = {state: false, name:''}
+    const [integrated, setIntegrated] = useState({left:defaultIntegrated, right:defaultIntegrated});
     const [mergedData, setMergedData] = useState([]);
     const [from, setFrom] = useState('');
     const befores = [15, 30, 90, 181, 372, 365, 547, 730, 911, 1096, 1277, 1461, 1826, 3653].reverse();
     const [sliderValue, setSliderValue] = useState(befores.length-1);
     const getSideOf = (orientation) => datas.filter(data => data.orientation===orientation);
     const canIntegrate = (orientation) => getSideOf(orientation).length>=2 ;
-    const setIntegratedDefault = () => setIntegrated(prev => ({...defaultIntegrated}) );
+    const setIntegratedDefault = (orientation) => setIntegrated(prev => {
+        prev[orientation]=defaultIntegrated;
+        return {...prev};
+    });
     const toggleIntegrated = (orientation) => {
         if(!integrated[orientation].state){
             let name;
@@ -125,12 +119,13 @@ const DataChart = ({datas, xAxis}) => {
         }   
     }
     const setFromBefore = (days) =>{
-        if(!days) return setFrom('1900-01-01');
+        if(!days) return setFrom('1980-01-01');
         const date = new Date().addDate(-days).format('yyyy-mm-dd');
         setFrom(date);
     }
     useEffect(()=> {
-        datas.length<2 && setIntegratedDefault();
+        getSideOf('left').length<2 && setIntegratedDefault('left');
+        getSideOf('right').length<2 && setIntegratedDefault('right');
         datas.forEach(data => setUnit(data));
         setMergedData( merge(xAxis, from, ...datas.map( d => [d.yAxis, d.data])) );
     },[datas, from])
@@ -216,7 +211,7 @@ const DataChart = ({datas, xAxis}) => {
         </ComposedChart>
     </ResponsiveContainer>
     <div className="chart-control-btns">
-        <div className={`integrate-left`}>
+        <div className='integrate'>
             {canIntegrate('left') && 
                 <Chip
                     onClick={()=>toggleIntegrated('left')}
@@ -226,7 +221,7 @@ const DataChart = ({datas, xAxis}) => {
         <div className="period-btns">
             <Grid container  spacing={3}>
                 <Grid container item xs={12} md={6}className="period-selector" spacing={3} style={{padding:'2px'}}>
-                    <Grid item xs={6} container alignItems="center">
+                    <Grid item xs={6} md={7} container alignItems="center">
                         <Slider
                             value={sliderValue}
                             step={1}
@@ -238,7 +233,7 @@ const DataChart = ({datas, xAxis}) => {
                                 setSliderValue(newValue)
                             }}/>
                     </Grid>
-                    <Grid item xs={6} container alignItems="center">
+                    <Grid item xs={6} md={5} container alignItems="center">
                         <TextField
                             fullWidth
                             id="date"
@@ -249,11 +244,10 @@ const DataChart = ({datas, xAxis}) => {
                 </Grid>
                 <Grid container item xs={12} md={6} className="select-period-btns" alignItems="center">
                     {[
-                        [30, '1M'],[91, '3M'],[183, '6M'],[365, '1Y'],[1096, '3Y'],[0, '전체'],
+                        [30, '1M'],[91, '3M'],[365, '1Y'],[0, '전체'],
                     ].map(([day, label]) => (
-                        <Grid item xs={2} key={day}>
-                            <Chip 
-                                color="primary"
+                        <Grid item xs={3} key={day}>
+                            <Chip
                                 onClick={()=>setFromBefore(day)} 
                                 label={label}/>
                         </Grid>
@@ -261,7 +255,7 @@ const DataChart = ({datas, xAxis}) => {
                 </Grid>
             </Grid>
         </div>
-        <div className={`integrate-leftright`}>
+        <div className='integrate'>
             {canIntegrate('right') && 
                 <Chip
                     onClick={()=>toggleIntegrated('right')}

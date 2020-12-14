@@ -39,6 +39,10 @@ const Selected = ({selected, defaultStrokes, updateSelected, removeSelected, rem
                         name:"지수이동평균선"
                     },
                     {
+                        func: () => updateSelected(idx, data.getMovingAverage(5)),
+                        name:"5일 이동평균선"
+                    },
+                    {
                         func: () => updateSelected(idx, data.getMovingAverage(20)),
                         name:"20일 이동평균선"
                     },
