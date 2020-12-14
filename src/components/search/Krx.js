@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {Grid, FormControl, TextField, Select, MenuItem, IconButton, Chip, Avatar} from '@material-ui/core';
 import { IoAddCircleOutline, IoSearchOutline } from 'react-icons/io5';
 import { corpNameAndCode, krxStockInfo, krxOptions, krxFinancialStatement, krxFinancialRatio } from 'getdata';
-import { KrxData } from 'objects/Data';
+import { KrxStockData, KrxCorpData } from 'objects/Data';
 
 const Krx = ({select, strokeGenerator, orientation}) => {
     const initialOptionTree ={
@@ -60,7 +60,7 @@ const Krx = ({select, strokeGenerator, orientation}) => {
     const [searchValue, setSearchValue] = useState("");
     const [corpName, setCorpName] = useState("");
     const [corpCode, setCorpCode] = useState("");
-    const [optionDepth, setOptionDepth] = useState(1);
+    const [optionDepth, setOptionDepth] = useState(0);
     const [optionList1, opt1, visible1, setOptionList1, setOpt1, setVisible1] = useOption([]);
     const [optionList2, opt2, visible2, setOptionList2, setOpt2, setVisible2] = useOption([]);
     const [optionList3, opt3, visible3, setOptionList3, setOpt3, setVisible3] = useOption([]);
@@ -165,7 +165,7 @@ const Krx = ({select, strokeGenerator, orientation}) => {
     };
     const onAddButtonClicked = async () => {
         const necessaryOpts = [opt1, opt2, opt3, opt4].filter((o, idx)=>idx<optionDepth);
-        if(necessaryOpts.some( opt => opt==='')){
+        if(necessaryOpts.some( opt => opt==='') || optionDepth===0){
             alert('선택된 데이터가 없습니다.');
             return;
         }
@@ -177,42 +177,54 @@ const Krx = ({select, strokeGenerator, orientation}) => {
         //재무상태표, 재무비율
         else
             item = [opt1, opt2, opt3, opt4][optionDepth-1];
-        const krxData = new KrxData({
-            corpName,
-            item,
-            stroke: strokeGenerator(),
-            orientation
-        })
+        
         const inCache = getCache(corpCode, ...necessaryOpts);
-        if(inCache){
-            krxData.setCacheData(inCache);
+        if(opt1==='종목정보'){
+            const krxData = new KrxStockData({
+                corpName,
+                item,
+                stroke: strokeGenerator(),
+                orientation
+            })
+            if(inCache){
+                krxData.setData(inCache);
+            }
+            else{
+                const data = await krxStockInfo(corpCode, opt2);
+                putCache(data, corpCode, opt1, opt2);
+                krxData.setData(data);
+            }
+            select(krxData);
         }
-        else {
-            let data={};
-            if(opt1==='종목정보'){
-                data = await krxStockInfo(corpCode, opt2, '2020-10-01');
-                putCache(corpCode, opt1, opt2);
-                krxData.setCacheData(data);
+        else{
+            const krxData = new KrxCorpData({
+                corpName,
+                item,
+                stroke: strokeGenerator(),
+                orientation
+            })
+            if(inCache){
+                krxData.setFormedData(inCache);
             }
             else if(opt1==='재무제표(연결)'){
                 if (opt2==='재무상태표') {
-                    data = await krxFinancialStatement(corpCode, '재무상태표', opt3, opt4);
+                    const data = await krxFinancialStatement(corpCode, '재무상태표', opt3, opt4);
                     putCache(data, corpCode, opt1, opt2, opt3, opt4);
-                    krxData.setCacheData(data);
+                    krxData.setFormedData(data);
                 }
                 else if (opt2==='손익계산서') {
-                    data = await krxFinancialStatement(corpCode, '손익계산서', opt3);
+                    const data = await krxFinancialStatement(corpCode, '손익계산서', opt3);
                     putCache(data, corpCode, opt1, opt2, opt3);
-                    krxData.setCacheData(data[opt4]);
+                    krxData.setFormedData(data[opt4]);
                 }
             }
             else if(opt1==='재무비율'){
-                data = await krxFinancialRatio(corpCode, opt2);
+                const data = await krxFinancialRatio(corpCode, opt2);
                 putCache(data, corpCode, opt1, opt2);
-                krxData.setCacheData(data);
+                krxData.setFormedData(data);
             }
+            select(krxData);
         }
-        select(krxData);
     }
     
     return (

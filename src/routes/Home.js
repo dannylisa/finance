@@ -3,6 +3,8 @@ import Search from 'components/Search';
 import Selected from 'components/Selected';
 import DataChart from 'components/DataChart';
 import { LineData, BarData } from 'objects/Data';
+import Recommend from 'components/Recommend';
+import { krxStockInfo } from 'getdata';
 
 const Home = () => {
     const defaultStrokes = ["#8884d8", "#ff9d44", "#44aaff","#73c96c", "#d4af37", "#ff7777", "#aaaaaa"];
@@ -98,9 +100,10 @@ const Home = () => {
 
     return(
         <>
-        <div style={{height:'400px'}}>
-            {selected.length>0 && <DataChart datas={selected} xAxis="date"/>}
-        </div>
+        
+            {selected.length>0 
+                ? <DataChart datas={selected} xAxis="date"/>
+                : <div style={{minHeight:'450px'}}/>}
         <Selected 
             selected={selected}
             defaultStrokes={defaultStrokes}
@@ -117,6 +120,7 @@ const Home = () => {
                 :
                     'left'
             }/>
+        <Recommend/>
         </>
     )
 }

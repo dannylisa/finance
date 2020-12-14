@@ -6,9 +6,10 @@ export class Data {
         this.orientation = orientation || "left";
         this.label = yAxis;
         this.isOriginData = true;
-        this.needAxis = true;
+
         this.isOriginData = true;
         this.unit='';
+        this.needUnit=true;
     }
     setData = function(newData){
         this.data = newData;
@@ -56,31 +57,6 @@ export class Data {
             return this;
         return this.originData;
     }
-    //Axis의 Dependency를 설정해둠으로써 해당 데이터가 삭제되었을 시 depend하던 데이터가 Axis 이름을 물려받게 된다.
-    // addDepender = function(depender){
-    //     depender.setDepender(null);
-    //     depender.setNeedAxis(false, this.yAxis);
-    //     if(this.depender)
-    //         this.depender = [...this.depender, depender];
-    //     else
-    //         this.depender = [depender];
-    // }
-    // // Should Call When Data dies
-    // giveDepender = function(){
-    //     this.isRemoved = true;
-    //     if(!this.depender)
-    //         return;
-    //     for(let i = 0; i<this.depender.length; i++){
-    //         if(this.depender[i].isRemoved)
-    //             continue;
-    //         this.depender[i].setNeedAxis(true);
-    //         this.depender[i].depender = this.depender.filter((d, idx)=>idx>i);
-    //         this.depender[i].depender.forEach( data => {
-    //             data.setNeedAxis(false, this.depender[i].yAxis);
-    //         })
-    //         return;
-    //     }
-    // }
     //sorted by date, or xAxis
     getSortedData = function(){
         return Object.entries(this.data).sort( (m, n) => m[0]  > n[0] ? 1 : -1);
@@ -198,7 +174,6 @@ export class BarData extends Data{
 export class ExchangeRateData extends LineData{
     constructor({base, symbol, stroke, orientation}) {
         super({
-            type:"line",
             yAxis:`${base}/${symbol}`,
             stroke,
             orientation
@@ -209,10 +184,23 @@ export class ExchangeRateData extends LineData{
     }
 }
 
-export class KrxData extends BarData{
+export class KrxStockData extends LineData{
     constructor({corpName, item, stroke, orientation}) {
         super({
-            type:"bar",
+            yAxis:`${corpName} ${item}`,
+            stroke,
+            orientation
+        });
+        this.corpName=corpName;
+        this.item=item;
+        this.setLabel(`${this.corpName} ${this.item}`);
+        this.needUnit= this.item!=='주가';
+    }
+}
+
+export class KrxCorpData extends BarData{
+    constructor({corpName, item, stroke, orientation}) {
+        super({
             yAxis:`${corpName} ${item}`,
             stroke,
             orientation
@@ -221,8 +209,8 @@ export class KrxData extends BarData{
         this.item=item;
         this.setLabel(`${this.corpName} ${this.item}`);
     }
-    setCacheData = function(cacheData){
-        const entries = Object.entries(cacheData);
+    setFormedData = function(data){
+        const entries = Object.entries(data);
         let res ={}
         entries.forEach(([quarter, value]) => {
             quarter = quarter.replace('_1Q','-03-31')

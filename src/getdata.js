@@ -121,51 +121,31 @@ export const krxFinancialRatio = async (corp_code, item) => {
     }
 }
 
-export const krxStockInfo = async(corp_code, item, from) => {
-    const getPageOfData = async () => {
-        from = new Date(from).setMinutes(0);
-        const end = new Date().setMinutes(0);
-        // const api_url=`https://cors-anywhere.herokuapp.com/https://finance.naver.com/item/sise_day.nhn?code=${corp_code}&page=${page}`;
-        const api_url=`https://finance.yahoo.com/quote/${corp_code}.KS/history?period1=${from}&period2=${end}}&interval=1d&filter=history&frequency=1d&includeAdjustedClose=true`;
+export const krxStockInfo = async(corp_code, item) => {
+    const getData = async () => {
+        const count = 1300;
+        // const api_url=`https://cors-anywhere.herokuapp.com/https://fchart.stock.naver.com/sise.nhn?symbol=${corp_code}&timeframe=day&count=${count}&requestType=0`;
+        const api_url=`https://fchart.stock.naver.com/sise.nhn?symbol=${corp_code}&timeframe=day&count=${count}&requestType=0`;
         const {data} = await axios.get(api_url);
-        const $ = cheerio.load(data);
-        // Html parsing Naver Finance
-        let rows = [];
-        
-        console.log(api_url);
-        console.log($('#Col1-1-HistoricalDataTable-Proxy > section > div').index(1));
-        // '2020.12.13'->'2020-12-13'
-        // '71,000'->'71000'
-        rows = rows.map( row => {
-            return row.map((col,idx) => {
-                return idx===0 ? col.replaceAll(/\./gi,'-') : parseInt(col.replace(/,/gi,''))
-            })
-        })
-        return rows
+        const {protocol:{chartdata:{item}}} = xml2jsonLtx.toJson(data, {object: true});
+        return item.map(i=>i.data);
     }
-
+    const rows = await getData();
     const res = {};
-    console.log(await getPageOfData(1))
-    // if( item==='주가' || item === '거래량'){
-    //     const itemIndex = item === '주가' ? 1 : 5;
-    //     await Promise.all(
-    //         pageArray.forEach( async page => {
-    //             await getPageOfData(page).then( rows => {
-    //                 console.log(rows);
-    //                 rows.forEach( row => {
-    //                     res[row[0]] = row[itemIndex]
-    //                 })
-    //             })
-    //         })
-    //     )
-    // }
+    if(item==='주가' || item==='거래량'){
+        const itemIndex = item==='주가' ? 1 : 5;
+        rows.forEach( row => {
+            const values = row.split('|');
+            res[ values[0].replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') ] = parseInt(values[itemIndex]);
+        })
+    }
     return res;
 }
-// export const stockInfo = async (corp_code, bsns_year, reprt_code) => {
-//     const api_url = 'https://cors-anywhere.herokuapp.com/http://asp1.krx.co.kr/servlet/krx.asp.XMLSise?code=035420';
+export const latestStockInfo = async (corp_code) => {
+    // const api_url = `https://cors-anywhere.herokuapp.com/http://asp1.krx.co.kr/servlet/krx.asp.XMLSise?code=${corp_code}`;
 
-//     const {data} =  await axios.get(api_url);
-//     const options = {object: true};
-//     const {stockprice : {TBL_StockInfo}} = xml2jsonLtx.toJson(data, options);
-//     console.log(TBL_StockInfo);
-// }
+    // const {data} =  await axios.get(api_url);
+    // const options = {object: true};
+    // const {stockprice} = xml2jsonLtx.toJson(data, options);
+    // console.log(stockprice);
+}
